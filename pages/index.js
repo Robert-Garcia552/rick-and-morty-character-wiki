@@ -23,15 +23,28 @@ export default function Home({ data }) {
     ...info,
     current: defaultEndpoint
   });
+  const [errorMessage, updateError] = useState('');
   const { current } = page;
 
   useEffect(() => {
     if ( current === defaultEndpoint ) return;
   
     async function request() {
-      const res = await fetch(current)
+      const res = await fetch(current);
       const nextData = await res.json();
   
+      updateError(err => {
+        return [
+          err
+        ]
+      });
+
+      if ( res.status === 404 ) {
+        updateError('Sorry no results.');
+      } else {
+        updateError('');
+      }
+
       updatePage({
         current,
         ...nextData.info
@@ -65,7 +78,6 @@ export default function Home({ data }) {
   function handleSubmitSearch(e) {
     e.preventDefault();
 
-    // TODO: Handle empty search results.
     const { currentTarget  = {} } = e;
     const fields = Array.from(currentTarget?.elements);
     const fieldQuery = fields.find(field => field.name === 'query');
@@ -98,9 +110,13 @@ export default function Home({ data }) {
           <input name="query" type="search" />
           <button>Search</button>          
         </form>
+        
+        <p className={styles.error}>
+          { errorMessage }
+        </p>
 
         <ul className={styles.grid}>
-          {results.map(result => {
+          {results?.map(result => {
             const { id, name, image } = result;
 
             return (
@@ -116,9 +132,13 @@ export default function Home({ data }) {
           })}
         </ul>
 
-        <p>
-          <button onClick={handleLoadMore}>Load More</button>
-        </p>
+        {results ? 
+            <p>
+              <button onClick={handleLoadMore}>Load More</button>
+            </p>
+          : ''
+        }
+       
       </main>
 
       <footer className={styles.footer}>
